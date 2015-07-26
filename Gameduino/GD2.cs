@@ -69,6 +69,35 @@ namespace Gameduino
             return new Inputs(touchrz);
         }
 
+        public enum Filter
+        {
+            Nearest = 0,
+            Bilinear = 1
+        }
+
+        public enum Wrap
+        {
+            Border = 0,
+            Repeat = 1
+        }
+
+        public static void Load(string path)
+        {
+            
+        }
+
+        public static void BitmapSize(Filter filter, Wrap wrapx, Wrap wrapy, ushort width, ushort height)
+        {
+            uint fxy = ((uint)filter << 2) | ((uint)wrapx << 1) | ((uint)wrapy);
+            uint cmd = (8 << 24) | (uint)height | ((uint)width << 9) | (fxy << 18);
+            GDTransport.cmd32(cmd);
+        }
+
+        public static void BlendFunc(Blend source, Blend destination)
+        {
+            uint cmd = (11 << 24) | ((uint)source << 3) | (uint)destination;
+        }
+
         public static void ClearColorRGB(uint rgb)
         {
             GDTransport.cmd32(0x02000000 | (rgb & 0xffffff));
@@ -94,6 +123,39 @@ namespace Gameduino
             GDTransport.cmd32(0x21000000);
         }
 
+        public static void RestoreContext()
+        {
+            GDTransport.cmd32(0x23000000);
+        }
+
+        public static void Gradient(ushort x0, ushort y0, uint rgb0, ushort x1, ushort y1, uint rgb1)
+        {
+            byte[] data = new byte[20];
+
+            data[0] = 0x0b;
+            data[1] = 0xff;
+            data[2] = 0xff;
+            data[3] = 0xff;
+            data[4] = (byte)x0;
+            data[5] = (byte)(x0 >> 8);
+            data[6] = (byte)y0;
+            data[7] = (byte)(y0 >> 8);
+            data[8] = (byte)rgb0;
+            data[9] = (byte)(rgb0 >> 8);
+            data[10] = (byte)(rgb0 >> 16);
+            data[11] = (byte)(rgb0 >> 24);
+            data[12] = (byte)x1;
+            data[13] = (byte)(x1 >> 8);
+            data[14] = (byte)y1;
+            data[15] = (byte)(y1 >> 8);
+            data[16] = (byte)rgb1;
+            data[17] = (byte)(rgb1 >> 8);
+            data[18] = (byte)(rgb1 >> 16);
+            data[19] = (byte)(rgb1 >> 24);
+
+            GDTransport.cmd(data);
+        }
+
         public enum Primitive : uint
         {
             Bitmaps = 1,
@@ -105,6 +167,16 @@ namespace Gameduino
             EdgeStripA = 7,
             EdgeStripB = 8,
             Rects = 9
+        }
+
+        public enum Blend : byte
+        {
+            Zero = 0,
+            One = 1,
+            SrcAlpha = 2,
+            DstAlpha = 3,
+            OneMinusSrcAlpha = 4,
+            OneMinusDstAlpha = 5
         }
 
         public enum Instrument : byte
