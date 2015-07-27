@@ -55,8 +55,9 @@ namespace Logo
 
             while (true)
             {
-                if (t == 464) continue;
-                else t++;
+                /*if (t == 464) continue;
+                else t++;*/
+                t++;
 
                 GD2.Gradient(0, 0, 0x120000, 0, 272, 0x480000);
                 GD2.BlendFunc(GD2.Blend.SrcAlpha, GD2.Blend.One);

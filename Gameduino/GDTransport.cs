@@ -12,18 +12,14 @@ namespace Gameduino
 
         private static int wp;
 
-        private static byte[] size1 = new byte[1];
-        private static byte[] size2 = new byte[2];
         private static byte[] size3 = new byte[3];
         private static byte[] size4 = new byte[4];
         private static byte[] size5 = new byte[5];
         private static byte[] size6 = new byte[6];
-        private static byte[] size7 = new byte[7];
-        private static byte[] size8 = new byte[8];
-
-        private static byte[] size1r = new byte[1];
         private static byte[] size6r = new byte[6];
-        private static byte[] size7r = new byte[7];
+
+        private static byte[] cmd_buffer = new byte[4095];
+        private static int cmd_ptr = 3;
 
         public static void Init()
         {
@@ -105,56 +101,27 @@ namespace Gameduino
         
         public static void cmd32(uint cmd)
         {
-            int addr = (0x108000 + wp);   // #define RAM_CMD               0x108000UL
+            cmd_buffer[cmd_ptr] = (byte)cmd;
+            cmd_buffer[cmd_ptr + 1] = (byte)(cmd >> 8);
+            cmd_buffer[cmd_ptr + 2] = (byte)(cmd >> 16);
+            cmd_buffer[cmd_ptr + 3] = (byte)(cmd >> 24);
 
-            wp = wp + 4;
-            if (wp >= 4096) wp -= 4096;
-
-            size7[0] = (byte)(0x80 | (addr >> 16));
-            size7[1] = (byte)(addr >> 8);
-            size7[2] = (byte)addr;
-            size7[3] = (byte)cmd;
-            size7[4] = (byte)(cmd >> 8);
-            size7[5] = (byte)(cmd >> 16);
-            size7[6] = (byte)(cmd >> 24);
-
-            spiDevice.Write(size7);
+            cmd_ptr += 4;
         }
 
         public static void cmd(byte[] data)
         {
-            int addr = (0x108000 + wp);   // #define RAM_CMD               0x108000UL
-
-            wp = wp + data.Length;
-            if (wp >= 4096) wp -= 4096;
-
-            byte[] temp = new byte[data.Length + 3];
-            temp[0] = (byte)(0x80 | (addr >> 16));
-            temp[1] = (byte)(addr >> 8);
-            temp[2] = (byte)addr;
-
-            for (int i = 0; i < data.Length; i++) temp[i + 3] = data[i];
-
-            spiDevice.Write(temp);
+            for (int i = 0; i < data.Length; i++) cmd_buffer[cmd_ptr + i] = data[i];
+            cmd_ptr += data.Length;
         }
 
         public static void cmd32(byte d0, byte d1, byte d2, byte d3)
         {
-            //stream();
-            int addr = (0x108000 + (wp & 0xfff));   // #define RAM_CMD               0x108000UL
-
-            wp = wp + 4;
-            if (wp >= 4096) wp -= 4096;
-
-            size7[0] = (byte)(0x80 | (addr >> 16));
-            size7[1] = (byte)(addr >> 8);
-            size7[2] = (byte)addr;
-            size7[3] = d0;
-            size7[4] = d1;
-            size7[5] = d2;
-            size7[6] = d3;
-
-            spiDevice.Write(size7);
+            cmd_buffer[cmd_ptr] = d0;
+            cmd_buffer[cmd_ptr + 1] = d1;
+            cmd_buffer[cmd_ptr + 2] = d2;
+            cmd_buffer[cmd_ptr + 3] = d3;
+            cmd_ptr += 4;
         }
 
         public static void cmd32ffffff(byte d0)
@@ -164,6 +131,19 @@ namespace Gameduino
 
         public static void finish()
         {
+            int addr = (0x108000 + (wp & 0xfff));   // #define RAM_CMD               0x108000UL
+
+            wp = wp + cmd_ptr - 3;
+            if (wp >= 4096) wp -= 4096;
+
+            cmd_buffer[0] = (byte)(0x80 | (addr >> 16));
+            cmd_buffer[1] = (byte)(addr >> 8);
+            cmd_buffer[2] = (byte)addr;
+
+            spiDevice.Write(cmd_buffer);
+
+            cmd_ptr = 3;
+
             wp &= 0xffc;
             wr16(1058024, (ushort)wp);  // #define REG_CMD_WRITE        1058024UL
             while (rp() != wp) ;
