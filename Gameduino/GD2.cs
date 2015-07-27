@@ -6,6 +6,174 @@ namespace Gameduino
 {
     public static class GD2
     {
+        #region Enumerations
+        public enum Filter
+        {
+            Nearest = 0,
+            Bilinear = 1
+        }
+
+        public enum Wrap
+        {
+            Border = 0,
+            Repeat = 1
+        }
+
+        public enum Primitive : uint
+        {
+            Bitmaps = 1,
+            Points = 2,
+            Lines = 3,
+            LineStrip = 4,
+            EdgeStripR = 5,
+            EdgeStripL = 6,
+            EdgeStripA = 7,
+            EdgeStripB = 8,
+            Rects = 9
+        }
+
+        public enum Blend : byte
+        {
+            Zero = 0,
+            One = 1,
+            SrcAlpha = 2,
+            DstAlpha = 3,
+            OneMinusSrcAlpha = 4,
+            OneMinusDstAlpha = 5
+        }
+
+        public enum Instrument : byte
+        {
+            Silence = 0x00,
+            Squarewave = 0x01,
+            Sinewave = 0x02,
+            Sawtooth = 0x03,
+            Triangle = 0x04,
+            Beeping = 0x05,
+            Alarm = 0x06,
+            Warble = 0x07,
+            Carousel = 0x08,
+            Pips = 0x0F,
+            Harp = 0x40,
+            Xylophone = 0x41,
+            Tuba = 0x42,
+            Glockenspiel = 0x43,
+            Organ = 0x44,
+            Trumpet = 0x45,
+            Piano = 0x46,
+            Chimes = 0x47,
+            MusicBox = 0x48,
+            Bell = 0x49,
+            Click = 0x50,
+            Switch = 0x51,
+            Cowbell = 0x52,
+            Notch = 0x53,
+            Hihat = 0x54,
+            Kickdrum = 0x55,
+            Pop = 0x56,
+            Clack = 0x57,
+            Chack = 0x58,
+            Mute = 0x60,
+            Unmute = 0x61
+        }
+
+        [Flags]
+        public enum Options : ushort
+        {
+            Mono = 1,
+            Nodl = 2,
+            Flag = 256,
+            CenterX = 512,
+            CenterY = 1024,
+            Center = CenterX | CenterY,
+            NoBack = 4096,
+            NoTicks = 8192,
+            NoPointer = 16384,
+            NoSecs = 32768,
+            RightX = 2048,
+            Signed = 256
+        }
+
+        public enum PixelFormat : byte
+        {
+            ARGB1555 = 0,
+            L1 = 1,
+            L4 = 2,
+            L8 = 3,
+            RGB332 = 4,
+            ARGB2 = 5,
+            ARGB4 = 6,
+            RGB565 = 7,
+            PALETTED = 8,
+            TEXT8X8 = 9,
+            TEXTVGA = 10,
+            BARGRAPH = 11
+        }
+        #endregion
+
+        #region Initialization
+        private static ushort lcdWidth = 480;				// Active width of LCD display
+        private static ushort lcdHeight = 272;				// Active height of LCD display
+        private static ushort lcdHcycle = 548;				// Total number of clocks per line
+        private static ushort lcdHoffset = 43;				// Start of active line
+        private static ushort lcdHsync0 = 0;				// Start of horizontal sync pulse
+        private static ushort lcdHsync1 = 41;				// End of horizontal sync pulse
+        private static ushort lcdVcycle = 292;				// Total number of lines per screen
+        private static ushort lcdVoffset = 12;				// Start of active screen
+        private static ushort lcdVsync0 = 0;				// Start of vertical sync pulse
+        private static ushort lcdVsync1 = 10;				// End of vertical sync pulse
+        private static byte lcdPclk = 5;				// Pixel Clock
+        private static byte lcdSwizzle = 3;				// Define RGB output pins
+        private static byte lcdPclkpol = 1;				// Define active edge of PCLK
+
+        public static void Init()
+        {
+            GDTransport.Init();
+
+            Debug.Print("ID Register: " + GDTransport.rd(GPU_Registers.ID));
+
+            // wake up the FT800
+            GDTransport.hostcmd(0x00);
+
+            GDTransport.wr8(GPU_Registers.PCLK, 0);
+            GDTransport.wr8(GPU_Registers.PWM_DUTY, 0);
+
+            // initialize the display
+            GDTransport.wr16(GPU_Registers.HSIZE, lcdWidth);	// active display width
+            GDTransport.wr16(GPU_Registers.HCYCLE, lcdHcycle);	// total number of clocks per line, incl front/back porch
+            GDTransport.wr16(GPU_Registers.HOFFSET, lcdHoffset);// start of active line
+            GDTransport.wr16(GPU_Registers.HSYNC0, lcdHsync0);	// start of horizontal sync pulse
+            GDTransport.wr16(GPU_Registers.HSYNC1, lcdHsync1);	// end of horizontal sync pulse
+            GDTransport.wr16(GPU_Registers.VSIZE, lcdHeight);	// active display height
+            GDTransport.wr16(GPU_Registers.VCYCLE, lcdVcycle);	// total number of lines per screen, incl pre/post
+            GDTransport.wr16(GPU_Registers.VOFFSET, lcdVoffset);// start of active screen
+            GDTransport.wr16(GPU_Registers.VSYNC0, lcdVsync0);	// start of vertical sync pulse
+            GDTransport.wr16(GPU_Registers.VSYNC1, lcdVsync1);	// end of vertical sync pulse
+            GDTransport.wr8(GPU_Registers.SWIZZLE, lcdSwizzle);	// FT800 output to LCD - pin order
+            GDTransport.wr8(GPU_Registers.PCLK_POL, lcdPclkpol);// LCD data is clocked in on this PCLK edge
+
+            // configure Touch and Audio - not used in this example, so disable both
+            GDTransport.wr16(GPU_Registers.TOUCH_MODE, 0);		// Disable touch
+            GDTransport.wr16(GPU_Registers.TOUCH_RZTHRESH, 0);	// Eliminate any false touches
+
+            GDTransport.wr8(GPU_Registers.VOL_PB, 0);		    // turn recorded audio volume down
+            GDTransport.wr8(GPU_Registers.VOL_SOUND, 0);		// turn synthesizer volume down
+            GDTransport.wr16(GPU_Registers.SOUND, 0x6000);		// set synthesizer to mute
+
+            // enable display
+            GDTransport.wr8(GPU_Registers.PCLK, lcdPclk);		// Now start clocking data to the LCD panel
+            GDTransport.wr8(GPU_Registers.PWM_DUTY, 127);       // Backlight to full power
+
+            GDTransport.wr8(GPU_Registers.GPIO_DIR, 0x83);
+            GDTransport.wr8(GPU_Registers.GPIO, 0x80);
+
+            // start a display list
+            GDTransport.cmd32(0xffffff00);//CMD_DLSTART
+            //GDTransport.cmd32(0xffffff26);//CMD_LOADIDENTITY
+        }
+        #endregion
+
+        #region Touch Input
         [StructLayout(LayoutKind.Sequential)]
         public struct Inputs
         {
@@ -69,33 +237,48 @@ namespace Gameduino
             return new Inputs(touchrz);
         }
 
-        public enum Filter
+        public static void EnableTouch()
         {
-            Nearest = 0,
-            Bilinear = 1
+            GDTransport.wr16(GPU_Registers.TOUCH_MODE, 3);
+            GDTransport.wr16(GPU_Registers.TOUCH_RZTHRESH, 3000);
+            SelfCalibrate();
         }
 
-        public enum Wrap
+        public static void DisableTouch()
         {
-            Border = 0,
-            Repeat = 1
+            GDTransport.wr16(GPU_Registers.TOUCH_MODE, 0);
+            GDTransport.wr16(GPU_Registers.TOUCH_RZTHRESH, 0);
+        }
+        #endregion
+
+        private static Random generator = new Random((int)DateTime.Now.Ticks);
+
+        public static void Begin(Primitive primitive)
+        {
+            GDTransport.cmd32((uint)0x1F000000 | (uint)primitive);
         }
 
-        public static void Load(string path)
+        public static void BitmapLayout(PixelFormat format, ushort lineStride, ushort height)
         {
-            
+            uint cmd = (0x07 << 24) | ((uint)format << 19) | ((uint)(lineStride & 1023) << 9) | (uint)(height & 511);
+            GDTransport.cmd32(cmd);
         }
 
         public static void BitmapSize(Filter filter, Wrap wrapx, Wrap wrapy, ushort width, ushort height)
         {
             uint fxy = ((uint)filter << 2) | ((uint)wrapx << 1) | ((uint)wrapy);
-            uint cmd = (8 << 24) | (uint)height | ((uint)width << 9) | (fxy << 18);
+            uint cmd = (0x08 << 24) | (uint)height | ((uint)width << 9) | (fxy << 18);
             GDTransport.cmd32(cmd);
         }
 
         public static void BlendFunc(Blend source, Blend destination)
         {
             uint cmd = (11 << 24) | ((uint)source << 3) | (uint)destination;
+        }
+
+        public static void Clear()
+        {
+            GDTransport.cmd32(0x26000007);
         }
 
         public static void ClearColorRGB(uint rgb)
@@ -108,9 +291,20 @@ namespace Gameduino
             GDTransport.cmd32(blue, green, red, 2);
         }
 
-        public static void Clear()
+        public static void ColorA(byte alpha)
         {
-            GDTransport.cmd32(0x26000007);
+            GDTransport.cmd32((uint)0x10000000 | alpha);
+        }
+
+        public static void ColorRGB(byte r, byte g, byte b)
+        {
+            GDTransport.cmd32((uint)0x04000000 | (uint)(r << 16) | (uint)(g << 8) | b);
+        }
+
+        public static void ColorRGB(uint color)
+        {
+            color &= 0xffffff;
+            GDTransport.cmd32((uint)0x04000000 | color);
         }
 
         public static void Display()
@@ -118,14 +312,35 @@ namespace Gameduino
             GDTransport.cmd32(0x00000000);
         }
 
+        public static void DisplayText(ushort x, ushort y, byte font, Options options, string s)
+        {
+            byte align = 0;
+            byte n = (byte)(s.Length + 1);
+
+            while (((n++) & 3) != 0) align++;
+
+            byte[] data = new byte[4 + 2 + 2 + 2 + 2 + s.Length + 1 + align];
+
+            data[0] = 0x0c;
+            data[1] = 0xff;
+            data[2] = 0xff;
+            data[3] = 0xff;
+            data[4] = (byte)x;
+            data[5] = (byte)(x >> 8);
+            data[6] = (byte)y;
+            data[7] = (byte)(y >> 8);
+            data[8] = font;
+            //data[9] = 0;
+            data[10] = (byte)options;
+            data[11] = (byte)((ushort)options >> 8);
+            for (int i = 0; i < s.Length; i++) data[12 + i] = (byte)s[i];
+
+            GDTransport.cmd(data);
+        }
+
         public static void End()
         {
             GDTransport.cmd32(0x21000000);
-        }
-
-        public static void RestoreContext()
-        {
-            GDTransport.cmd32(0x23000000);
         }
 
         public static void Gradient(ushort x0, ushort y0, uint rgb0, ushort x1, ushort y1, uint rgb1)
@@ -156,65 +371,50 @@ namespace Gameduino
             GDTransport.cmd(data);
         }
 
-        public enum Primitive : uint
+        public static void Load(string path)
         {
-            Bitmaps = 1,
-            Points = 2,
-            Lines = 3,
-            LineStrip = 4,
-            EdgeStripR = 5,
-            EdgeStripL = 6,
-            EdgeStripA = 7,
-            EdgeStripB = 8,
-            Rects = 9
+
         }
 
-        public enum Blend : byte
+        public static void Memset(uint ptr, byte value, uint num)
         {
-            Zero = 0,
-            One = 1,
-            SrcAlpha = 2,
-            DstAlpha = 3,
-            OneMinusSrcAlpha = 4,
-            OneMinusDstAlpha = 5
+            byte[] data = new byte[16];
+
+            data[0] = 0x1b;
+            data[1] = 0xff;
+            data[2] = 0xff;
+            data[3] = 0xff;
+            data[4] = (byte)ptr;
+            data[5] = (byte)(ptr >> 8);
+            data[6] = (byte)(ptr >> 16);
+            data[7] = (byte)(ptr >> 24);
+            data[8] = value;
+            //data[9] = 0;
+            //data[10] = 0;
+            //data[11] = 0;
+            data[12] = (byte)num;
+            data[13] = (byte)(num >> 8);
+            data[14] = (byte)(num >> 16);
+            data[15] = (byte)(num >> 24);
+
+            GDTransport.cmd(data);
         }
 
-        public enum Instrument : byte
+        public static void Play(Instrument instrument, byte note)
         {
-            Silence = 0x00,
-            Squarewave = 0x01,
-            Sinewave = 0x02,
-            Sawtooth = 0x03,
-            Triangle = 0x04,
-            Beeping = 0x05,
-            Alarm = 0x06,
-            Warble = 0x07,
-            Carousel = 0x08,
-            Pips = 0x0F,
-            Harp = 0x40,
-            Xylophone = 0x41,
-            Tuba = 0x42,
-            Glockenspiel = 0x43,
-            Organ = 0x44,
-            Trumpet = 0x45,
-            Piano = 0x46,
-            Chimes = 0x47,
-            MusicBox = 0x48,
-            Bell = 0x49,
-            Click = 0x50,
-            Switch = 0x51,
-            Cowbell = 0x52,
-            Notch = 0x53,
-            Hihat = 0x54,
-            Kickdrum = 0x55,
-            Pop = 0x56,
-            Clack = 0x57,
-            Chack = 0x58,
-            Mute = 0x60,
-            Unmute = 0x61
+            GDTransport.wr16(GPU_Registers.SOUND, (ushort)(((int)note << 8) | (int)instrument));
+            GDTransport.wr8(GPU_Registers.PLAY, 1);
         }
 
-        private static Random generator = new Random((int)DateTime.Now.Ticks);
+        public static void PointSize(ushort size)
+        {
+            GDTransport.cmd32((uint)0x0D000000 | size);
+        }
+
+        public static void RestoreContext()
+        {
+            GDTransport.cmd32(0x23000000);
+        }
 
         public static ushort Random()
         {
@@ -231,19 +431,57 @@ namespace Gameduino
             return (byte)generator.Next(byte.MaxValue);
         }
 
-        public static void Begin(Primitive primitive)
+        public static void SelfCalibrate()
         {
-            GDTransport.cmd32((uint)0x1F000000 | (uint)primitive);
+            GDTransport.cmd32(0xffffff00);//CMD_DLSTART
+            Clear();
+            DisplayText(240, 100, 30, Options.CenterX, "Please tap on the dot");
+
+            GDTransport.cmd32ffffff(0x15);
+            GDTransport.cmd32ffffff(0xff);
+
+            GDTransport.finish();
+            //GDTransport.cmd32(0xffffff26);//CMD_LOADIDENTITY
+            GDTransport.cmd32(0xffffff00);//CMD_DLSTART
         }
 
-        public static void ColorA(byte alpha)
+        public static void Sketch(ushort x, ushort y, ushort w, ushort h, uint ptr, PixelFormat format)
         {
-            GDTransport.cmd32((uint)0x10000000 | alpha);
+            byte[] data = new byte[20];
+
+            data[0] = 0x30;
+            data[1] = 0xff;
+            data[2] = 0xff;
+            data[3] = 0xff;
+            data[4] = (byte)x;
+            data[5] = (byte)(x >> 8);
+            data[6] = (byte)y;
+            data[7] = (byte)(y >> 8);
+            data[8] = (byte)w;
+            data[9] = (byte)(w >> 8);
+            data[10] = (byte)h;
+            data[11] = (byte)(h >> 8);
+            data[12] = (byte)ptr;
+            data[13] = (byte)(ptr >> 8);
+            data[14] = (byte)(ptr >> 16);
+            data[15] = (byte)(ptr >> 24);
+            data[16] = (byte)format;
+            //data[17] = 0;
+            //data[18] = 0;
+            //data[19] = 0;
+
+            GDTransport.cmd(data);
         }
 
-        public static void PointSize(ushort size)
+        public static void Swap()
         {
-            GDTransport.cmd32((uint)0x0D000000 | size);
+            GDTransport.cmd32(0x00000000);//DL_DISPLAY
+            GDTransport.cmd32(0xffffff01);//CMD_SWAP
+
+            GDTransport.finish();
+
+            GDTransport.cmd32(0xffffff00);//CMD_DLSTART
+            //GDTransport.cmd32(0xffffff26);//CMD_LOADIDENTITY
         }
 
         public static void TagMask(byte mask)
@@ -254,17 +492,6 @@ namespace Gameduino
         public static void Tag(byte s)
         {
             GDTransport.cmd32((uint)0x03000000 | s);
-        }
-
-        public static void ColorRGB(byte r, byte g, byte b)
-        {
-            GDTransport.cmd32((uint)0x04000000 | (uint)(r << 16) | (uint)(g << 8) | b);
-        }
-
-        public static void ColorRGB(uint color)
-        {
-            color &= 0xffffff;
-            GDTransport.cmd32((uint)0x04000000 | color);
         }
 
         public static void Vertex2f(int x, int y)
@@ -290,169 +517,14 @@ namespace Gameduino
             GDTransport.cmd32(cmd | _x | _y);
         }
 
-        public static void Swap()
+        public static void Vertex2ii(ushort x, ushort y, byte handle, byte cell)
         {
-            GDTransport.cmd32(0x00000000);//DL_DISPLAY
-            GDTransport.cmd32(0xffffff01);//CMD_SWAP
-            
-            GDTransport.finish();
+            return;
 
-            GDTransport.cmd32(0xffffff00);//CMD_DLSTART
-            //GDTransport.cmd32(0xffffff26);//CMD_LOADIDENTITY
-        }
-
-        private static ushort lcdWidth = 480;				// Active width of LCD display
-        private static ushort lcdHeight = 272;				// Active height of LCD display
-        private static ushort lcdHcycle = 548;				// Total number of clocks per line
-        private static ushort lcdHoffset = 43;				// Start of active line
-        private static ushort lcdHsync0 = 0;				// Start of horizontal sync pulse
-        private static ushort lcdHsync1 = 41;				// End of horizontal sync pulse
-        private static ushort lcdVcycle = 292;				// Total number of lines per screen
-        private static ushort lcdVoffset = 12;				// Start of active screen
-        private static ushort lcdVsync0 = 0;				// Start of vertical sync pulse
-        private static ushort lcdVsync1 = 10;				// End of vertical sync pulse
-        private static byte lcdPclk = 5;				// Pixel Clock
-        private static byte lcdSwizzle = 3;				// Define RGB output pins
-        private static byte lcdPclkpol = 1;				// Define active edge of PCLK
-
-        public static void Init()
-        {
-            GDTransport.Init();
-
-            Debug.Print("ID Register: " + GDTransport.rd(GPU_Registers.ID));
-
-            // wake up the FT800
-            GDTransport.hostcmd(0x00);
-
-            GDTransport.wr8(GPU_Registers.PCLK, 0);
-            GDTransport.wr8(GPU_Registers.PWM_DUTY, 0);
-
-            // initialize the display
-            GDTransport.wr16(GPU_Registers.HSIZE, lcdWidth);	// active display width
-            GDTransport.wr16(GPU_Registers.HCYCLE, lcdHcycle);	// total number of clocks per line, incl front/back porch
-            GDTransport.wr16(GPU_Registers.HOFFSET, lcdHoffset);// start of active line
-            GDTransport.wr16(GPU_Registers.HSYNC0, lcdHsync0);	// start of horizontal sync pulse
-            GDTransport.wr16(GPU_Registers.HSYNC1, lcdHsync1);	// end of horizontal sync pulse
-            GDTransport.wr16(GPU_Registers.VSIZE, lcdHeight);	// active display height
-            GDTransport.wr16(GPU_Registers.VCYCLE, lcdVcycle);	// total number of lines per screen, incl pre/post
-            GDTransport.wr16(GPU_Registers.VOFFSET, lcdVoffset);// start of active screen
-            GDTransport.wr16(GPU_Registers.VSYNC0, lcdVsync0);	// start of vertical sync pulse
-            GDTransport.wr16(GPU_Registers.VSYNC1, lcdVsync1);	// end of vertical sync pulse
-            GDTransport.wr8(GPU_Registers.SWIZZLE, lcdSwizzle);	// FT800 output to LCD - pin order
-            GDTransport.wr8(GPU_Registers.PCLK_POL, lcdPclkpol);// LCD data is clocked in on this PCLK edge
-
-            // configure Touch and Audio - not used in this example, so disable both
-            GDTransport.wr16(GPU_Registers.TOUCH_MODE, 0);		// Disable touch
-            GDTransport.wr16(GPU_Registers.TOUCH_RZTHRESH, 0);	// Eliminate any false touches
-
-            GDTransport.wr8(GPU_Registers.VOL_PB, 0);		    // turn recorded audio volume down
-            GDTransport.wr8(GPU_Registers.VOL_SOUND, 0);		// turn synthesizer volume down
-            GDTransport.wr16(GPU_Registers.SOUND, 0x6000);		// set synthesizer to mute
-
-            // enable display
-            GDTransport.wr8(GPU_Registers.PCLK, lcdPclk);		// Now start clocking data to the LCD panel
-            GDTransport.wr8(GPU_Registers.PWM_DUTY, 127);       // Backlight to full power
-
-            GDTransport.wr8(GPU_Registers.GPIO_DIR, 0x83);
-            GDTransport.wr8(GPU_Registers.GPIO, 0x80);
-
-            // start a display list
-            GDTransport.cmd32(0xffffff00);//CMD_DLSTART
-            //GDTransport.cmd32(0xffffff26);//CMD_LOADIDENTITY
-        }
-
-        public static void EnableTouch()
-        {
-            GDTransport.wr16(GPU_Registers.TOUCH_MODE, 3);
-            GDTransport.wr16(GPU_Registers.TOUCH_RZTHRESH, 3000);
-            SelfCalibrate();
-        }
-
-        public static void DisableTouch()
-        {
-            GDTransport.wr16(GPU_Registers.TOUCH_MODE, 0);
-            GDTransport.wr16(GPU_Registers.TOUCH_RZTHRESH, 0);
-        }
-
-        [Flags]
-        public enum Options : ushort
-        {
-            Mono = 1,
-            Nodl = 2,
-            Flag = 256,
-            CenterX = 512,
-            CenterY = 1024,
-            Center = CenterX | CenterY,
-            NoBack = 4096,
-            NoTicks = 8192,
-            NoPointer = 16384,
-            NoSecs = 32768,
-            RightX = 2048,
-            Signed = 256
-        }
-
-        public static void DisplayText(ushort x, ushort y, byte font, Options options, string s)
-        {
-            byte align = 0;
-            byte n = (byte)(s.Length + 1);
-            
-            while (((n++) & 3) != 0) align++;
-
-            byte[] data = new byte[4 + 2 + 2 + 2 + 2 + s.Length + 1 + align];
-
-            data[0] = 0x0c;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = font;
-            //data[9] = 0;
-            data[10] = (byte)options;
-            data[11] = (byte)((ushort)options >> 8);
-            for (int i = 0; i < s.Length; i++) data[12 + i] = (byte)s[i];
-
-            GDTransport.cmd(data);
-        }
-
-        private static void cmd_swap()
-        {
-            GDTransport.cmd32ffffff(1);
-        }
-
-        private static void cmd_loadidentity()
-        {
-            GDTransport.cmd32ffffff(0x26);
-        }
-
-        private static void cmd_dlstart()
-        {
-            GDTransport.cmd32ffffff(0);
-        }
-
-        private static void cmd_calibrate()
-        {
-            GDTransport.cmd32ffffff(0x15);
-            GDTransport.cmd32ffffff(0xff);
-        }
-
-        public static void Play(Instrument instrument, byte note)
-        {
-            GDTransport.wr16(GPU_Registers.SOUND, (ushort)(((int)note << 8) | (int)instrument));
-            GDTransport.wr8(GPU_Registers.PLAY, 1);
-        }
-
-        public static void SelfCalibrate()
-        {
-            cmd_dlstart();
-            Clear();
-            DisplayText(240, 100, 30, Options.CenterX, "Please tap on the dot");
-            cmd_calibrate();
-            GDTransport.finish();
-            //cmd_loadidentity();
-            cmd_dlstart();
+            uint _x = (uint)((x & 511) << 21);
+            uint _y = (uint)((y & 511) << 12);
+            uint cmd = (uint)(2 << 29) * 2;
+            GDTransport.cmd32(cmd | _x | _y | cell | ((uint)handle << 7));
         }
     }
 }
