@@ -18,7 +18,7 @@ namespace Gameduino
         private static byte[] size6 = new byte[6];
         private static byte[] size6r = new byte[6];
 
-        private static byte[] cmd_buffer = new byte[4095];
+        private static byte[] cmd_buffer = new byte[1024+3];
         private static int cmd_ptr = 3;
 
         public static void Init()
@@ -101,6 +101,9 @@ namespace Gameduino
         
         public static void cmd32(uint cmd)
         {
+            // check to make sure we have enough room in the cmd_buffer
+            if (cmd_ptr + 4 > cmd_buffer.Length - 3) finish();
+
             cmd_buffer[cmd_ptr] = (byte)cmd;
             cmd_buffer[cmd_ptr + 1] = (byte)(cmd >> 8);
             cmd_buffer[cmd_ptr + 2] = (byte)(cmd >> 16);
@@ -111,12 +114,27 @@ namespace Gameduino
 
         public static void cmd(byte[] data)
         {
+            // first make sure we can actually fit this data in memory
+            // if not simply increase the size of cmd_buffer up to a maximum size of 4095
+            if (data.Length > cmd_buffer.Length - 3)
+            {
+                Debug.Print("cmd was too large for buffer");
+                return;
+            }
+
+            // then check if we need to clear the cmd_ptr
+            if (cmd_ptr + data.Length > cmd_buffer.Length - 3) finish();
+
+            // finally copy all of the data to the cmd_uffer
             for (int i = 0; i < data.Length; i++) cmd_buffer[cmd_ptr + i] = data[i];
             cmd_ptr += data.Length;
         }
 
         public static void cmd32(byte d0, byte d1, byte d2, byte d3)
         {
+            // check to make sure we have enough room in the cmd_buffer
+            if (cmd_ptr + 4 > cmd_buffer.Length - 3) finish();
+
             cmd_buffer[cmd_ptr] = d0;
             cmd_buffer[cmd_ptr + 1] = d1;
             cmd_buffer[cmd_ptr + 2] = d2;
