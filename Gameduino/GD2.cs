@@ -384,7 +384,7 @@ namespace Gameduino
 
         public static void LoadImage(uint ptr, uint options)
         {
-            byte[] data = new byte[16];
+            byte[] data = new byte[12];
 
             data[0] = 0x24;
             data[1] = 0xff;
@@ -398,6 +398,8 @@ namespace Gameduino
             data[9] = (byte)(options >> 8);
             data[10] = (byte)(options >> 16);
             data[11] = (byte)(options >> 24);
+
+            GDTransport.cmd(data);
         }
 
         public static void Memset(uint ptr, byte value, uint num)
