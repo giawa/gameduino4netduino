@@ -166,6 +166,7 @@ namespace Gameduino
 
             GDTransport.wr8(GPU_Registers.GPIO_DIR, 0x83);
             GDTransport.wr8(GPU_Registers.GPIO, 0x80);
+            GDTransport.wr8(GPU_Registers.ROTATE, 1);           // The lcd viewing angle seem to be much better this way
 
             // start a display list
             GDTransport.cmd32(0xffffff00);//CMD_DLSTART
@@ -376,6 +377,29 @@ namespace Gameduino
 
         }
 
+        public static void Load(byte[] data)
+        {
+            GDTransport.cmd(data);
+        }
+
+        public static void LoadImage(uint ptr, uint options)
+        {
+            byte[] data = new byte[16];
+
+            data[0] = 0x24;
+            data[1] = 0xff;
+            data[2] = 0xff;
+            data[3] = 0xff;
+            data[4] = (byte)ptr;
+            data[5] = (byte)(ptr >> 8);
+            data[6] = (byte)(ptr >> 16);
+            data[7] = (byte)(ptr >> 24);
+            data[8] = (byte)options;
+            data[9] = (byte)(options >> 8);
+            data[10] = (byte)(options >> 16);
+            data[11] = (byte)(options >> 24);
+        }
+
         public static void Memset(uint ptr, byte value, uint num)
         {
             byte[] data = new byte[16];
@@ -519,8 +543,6 @@ namespace Gameduino
 
         public static void Vertex2ii(ushort x, ushort y, byte handle, byte cell)
         {
-            return;
-
             uint _x = (uint)((x & 511) << 21);
             uint _y = (uint)((y & 511) << 12);
             uint cmd = (uint)(2 << 29) * 2;
