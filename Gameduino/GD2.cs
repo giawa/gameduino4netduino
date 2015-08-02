@@ -6,6 +6,84 @@ using System.Runtime.InteropServices;
 
 namespace Gameduino
 {
+    public class Polygon
+    {
+        private int x0, y0, x1, y1;
+        private int[] x = new int[8];
+        private int[] y = new int[8];
+        private byte n;
+
+        private void Restart()
+        {
+            n = 0;
+            x0 = 16 * 480;
+            x1 = 0;
+            y0 = 16 * 272;
+            y1 = 0;
+        }
+
+        private void Perimeter()
+        {
+            for (byte i = 0; i < n; i++)
+                GD2.Vertex2f(x[i], y[i]);
+            GD2.Vertex2f(x[0], y[0]);
+        }
+
+        public void Begin()
+        {
+            Restart();
+
+            GD2.ColorMask(0, 0, 0, 0);
+            GD2.StencilOp(GD2.StencilOperation.Keep, GD2.StencilOperation.Invert);
+            GD2.StencilFunc(GD2.CompareFunc.Always, 255, 255);
+        }
+
+        public void V(int _x, int _y)
+        {
+            x0 = System.Math.Min(x0, _x >> 4);
+            x1 = System.Math.Max(x1, _x >> 4);
+            y0 = System.Math.Min(y0, _y >> 4);
+            y1 = System.Math.Max(y1, _y >> 4);
+            x[n] = _x;
+            y[n] = _y;
+            n++;
+        }
+
+        public void Paint()
+        {
+            x0 = System.Math.Max(0, x0);
+            y0 = System.Math.Max(0, y0);
+            x1 = System.Math.Min(16 * 480, x1);
+            y1 = System.Math.Min(16 * 272, y1);
+            GD2.ScissorXY((ushort)x0, (ushort)y0);
+            GD2.ScissorSize((ushort)(x1 - x0 + 1), (ushort)(y1 - y0 + 1));
+            GD2.Begin(GD2.Primitive.EdgeStripB);
+            Perimeter();
+        }
+
+        public void Finish()
+        {
+            GD2.ColorMask(1, 1, 1, 1);
+            GD2.StencilFunc(GD2.CompareFunc.Equal, 255, 255);
+
+            GD2.Begin(GD2.Primitive.EdgeStripB);
+            GD2.Vertex2ii(0, 0);
+            GD2.Vertex2ii(511, 0);
+        }
+
+        public void Draw()
+        {
+            Paint();
+            Finish();
+        }
+
+        public void Outline()
+        {
+            GD2.Begin(GD2.Primitive.LineStrip);
+            Perimeter();
+        }
+    }
+
     public static class GD2
     {
         #region Enumerations
@@ -110,6 +188,27 @@ namespace Gameduino
             TEXT8X8 = 9,
             TEXTVGA = 10,
             BARGRAPH = 11
+        }
+
+        public enum StencilOperation : byte
+        {
+            Keep = 1,
+            Replace = 2,
+            Increment = 3,
+            Decrement = 4,
+            Invert = 5
+        }
+
+        public enum CompareFunc : byte
+        {
+            Never = 0,
+            Less = 1,
+            Lequal = 2,
+            Greater = 3,
+            Gequal = 4,
+            Equal = 5,
+            NotEqual = 6,
+            Always = 7
         }
         #endregion
 
@@ -466,6 +565,11 @@ namespace Gameduino
             GDTransport.cmd32(angle);
         }
 
+        public static void SaveContext()
+        {
+            GDTransport.cmd32((uint)(34 << 24));
+        }
+
         public static void SetMatrix()
         {
             GDTransport.cmd32(0xffffff2a);
@@ -477,6 +581,32 @@ namespace Gameduino
             GDTransport.cmd32(0xffffff28);
             GDTransport.cmd32(sx);
             GDTransport.cmd32(sy);
+        }
+
+        public static void ScissorSize(ushort width, ushort height)
+        {
+            uint cmd = (uint)((28 << 24) | (width << 10) | height);
+            GDTransport.cmd32(cmd);
+        }
+
+        public static void ScissorXY(ushort x, ushort y)
+        {
+            GDTransport.cmd32((27 << 24) | ((x & 511) << 9) | (y & 511));
+        }
+
+        public static void StencilFunc(CompareFunc func, byte reference, byte mask)
+        {
+            GDTransport.cmd32((10 << 24) | ((byte)func << 16) | ((reference & 255) << 8) | (mask & 255));
+        }
+
+        public static void StencilMask(byte mask)
+        {
+            GDTransport.cmd32((19 << 24) | (mask & 255));
+        }
+
+        public static void StencilOp(StencilOperation sfail, StencilOperation spass)
+        {
+            GDTransport.cmd32((12 << 24) | ((byte)sfail << 3) | (byte)spass);
         }
 
         public static void Translate(int tx, int ty)
