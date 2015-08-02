@@ -1,4 +1,6 @@
 using Microsoft.SPOT;
+using Microsoft.SPOT.Hardware;
+using SecretLabs.NETMF.Hardware.NetduinoPlus;
 using System;
 using System.Runtime.InteropServices;
 
@@ -222,6 +224,21 @@ namespace Gameduino
             }
         }
 
+        private static AnalogInput pinA0 = new AnalogInput(AnalogChannels.ANALOG_PIN_A0);
+        private static AnalogInput pinA1 = new AnalogInput(AnalogChannels.ANALOG_PIN_A1);
+        private static AnalogInput pinA2 = new AnalogInput(AnalogChannels.ANALOG_PIN_A2);
+
+        public static void GetAccelerometer(ref int x, ref int y, ref int z)
+        {
+            int zf = (-160 * (pinA0.ReadRaw() / 4 - 440)) >> 6;
+            int yf = (-160 * (pinA1.ReadRaw() / 4 - 440)) >> 6;
+            int xf = (-160 * (pinA2.ReadRaw() / 4 - 440)) >> 6;
+
+            z = ((3 * z) >> 2) + (zf >> 2);
+            y = ((3 * y) >> 2) + (yf >> 2);
+            x = ((3 * x) >> 2) + (xf >> 2);
+        }
+
         public static Inputs GetInputs()
         {
             byte[] tracker = GDTransport.rd_n(GPU_Registers.TRACKER, 4);
@@ -440,6 +457,13 @@ namespace Gameduino
             data[15] = (byte)(num >> 24);
 
             GDTransport.cmd(data);
+        }
+
+        public static void Rotate(int angle)
+        {
+            GDTransport.free(8);
+            GDTransport.cmd32(0xffffff29);
+            GDTransport.cmd32(angle);
         }
 
         public static void SetMatrix()
