@@ -265,6 +265,11 @@ namespace Gameduino
             GDTransport.cmd32(cmd);
         }
 
+        public static void BitmapHandle(byte handle)
+        {
+            GDTransport.cmd32((uint)0x05000000 | handle);
+        }
+
         public static void BitmapSize(Filter filter, Wrap wrapx, Wrap wrapy, ushort width, ushort height)
         {
             uint fxy = ((uint)filter << 2) | ((uint)wrapx << 1) | ((uint)wrapy);
@@ -295,6 +300,12 @@ namespace Gameduino
         public static void ColorA(byte alpha)
         {
             GDTransport.cmd32((uint)0x10000000 | alpha);
+        }
+
+        public static void ColorMask(byte r, byte g, byte b, byte a)
+        {
+            uint cmd = (uint)((32 << 24) | ((r & 1) << 3) | ((g & 1) << 2) | ((b & 1) << 1) | ((a & 1) << 0));
+            GDTransport.cmd32(cmd);
         }
 
         public static void ColorRGB(byte r, byte g, byte b)
@@ -372,6 +383,11 @@ namespace Gameduino
             GDTransport.cmd(data);
         }
 
+        public static void LineWidth(ushort width)
+        {
+            GDTransport.cmd32((14 << 24) | width);
+        }
+
         public static void Load(string path)
         {
 
@@ -424,6 +440,27 @@ namespace Gameduino
             data[15] = (byte)(num >> 24);
 
             GDTransport.cmd(data);
+        }
+
+        public static void SetMatrix()
+        {
+            GDTransport.cmd32(0xffffff2a);
+        }
+
+        public static void Scale(int sx, int sy)
+        {
+            GDTransport.free(12);
+            GDTransport.cmd32(0xffffff28);
+            GDTransport.cmd32(sx);
+            GDTransport.cmd32(sy);
+        }
+
+        public static void Translate(int tx, int ty)
+        {
+            GDTransport.free(12);
+            GDTransport.cmd32(0xffffff27);
+            GDTransport.cmd32(tx);
+            GDTransport.cmd32(ty);
         }
 
         public static void Play(Instrument instrument, byte note)

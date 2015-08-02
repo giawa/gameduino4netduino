@@ -98,8 +98,27 @@ namespace Gameduino
 
             return read;
         }
+
+        public static void free(int amount)
+        {
+            if (amount > cmd_buffer.Length - 3) throw new Exception("Not enough free space.");
+            if (cmd_ptr + amount > cmd_buffer.Length - 3) finish();
+        }
         
         public static void cmd32(uint cmd)
+        {
+            // check to make sure we have enough room in the cmd_buffer
+            if (cmd_ptr + 4 > cmd_buffer.Length - 3) finish();
+
+            cmd_buffer[cmd_ptr] = (byte)cmd;
+            cmd_buffer[cmd_ptr + 1] = (byte)(cmd >> 8);
+            cmd_buffer[cmd_ptr + 2] = (byte)(cmd >> 16);
+            cmd_buffer[cmd_ptr + 3] = (byte)(cmd >> 24);
+
+            cmd_ptr += 4;
+        }
+
+        public static void cmd32(int cmd)
         {
             // check to make sure we have enough room in the cmd_buffer
             if (cmd_ptr + 4 > cmd_buffer.Length - 3) finish();
