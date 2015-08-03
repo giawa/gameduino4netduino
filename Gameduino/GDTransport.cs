@@ -18,7 +18,7 @@ namespace Gameduino
         private static byte[] size6 = new byte[6];
         private static byte[] size6r = new byte[6];
 
-        private static byte[] cmd_buffer = new byte[1024+3];
+        private static byte[] cmd_buffer = new byte[2048+3];
         private static int cmd_ptr = 3;
 
         public static void Init()
@@ -110,10 +110,13 @@ namespace Gameduino
             // check to make sure we have enough room in the cmd_buffer
             if (cmd_ptr + 4 > cmd_buffer.Length - 3) finish();
 
-            cmd_buffer[cmd_ptr] = (byte)cmd;
-            cmd_buffer[cmd_ptr + 1] = (byte)(cmd >> 8);
-            cmd_buffer[cmd_ptr + 2] = (byte)(cmd >> 16);
-            cmd_buffer[cmd_ptr + 3] = (byte)(cmd >> 24);
+            unchecked
+            {
+                cmd_buffer[cmd_ptr] = (byte)cmd;
+                cmd_buffer[cmd_ptr + 1] = (byte)(cmd >> 8);
+                cmd_buffer[cmd_ptr + 2] = (byte)(cmd >> 16);
+                cmd_buffer[cmd_ptr + 3] = (byte)(cmd >> 24);
+            }
 
             cmd_ptr += 4;
         }
@@ -123,12 +126,35 @@ namespace Gameduino
             // check to make sure we have enough room in the cmd_buffer
             if (cmd_ptr + 4 > cmd_buffer.Length - 3) finish();
 
-            cmd_buffer[cmd_ptr] = (byte)cmd;
-            cmd_buffer[cmd_ptr + 1] = (byte)(cmd >> 8);
-            cmd_buffer[cmd_ptr + 2] = (byte)(cmd >> 16);
-            cmd_buffer[cmd_ptr + 3] = (byte)(cmd >> 24);
+            unchecked
+            {
+                cmd_buffer[cmd_ptr] = (byte)cmd;
+                cmd_buffer[cmd_ptr + 1] = (byte)(cmd >> 8);
+                cmd_buffer[cmd_ptr + 2] = (byte)(cmd >> 16);
+                cmd_buffer[cmd_ptr + 3] = (byte)(cmd >> 24);
+            }
 
             cmd_ptr += 4;
+        }
+
+        public static void cmd(byte[] data, int size)
+        {
+            int remaining = size;
+            int offset = 0;
+
+            while (remaining > 0)
+            {
+                int length = (int)System.Math.Min(cmd_buffer.Length - cmd_ptr, remaining);
+                Array.Copy(data, offset, cmd_buffer, cmd_ptr, length);
+
+                cmd_ptr += length;
+                if (cmd_ptr == cmd_buffer.Length) finish();
+
+                remaining -= length;
+                offset += length;
+            }
+
+            while ((cmd_ptr - 3) % 4 != 0) cmd_ptr++;
         }
 
         public static void cmd(byte[] data)
@@ -139,7 +165,7 @@ namespace Gameduino
             while (remaining > 0)
             {
                 int length = (int)System.Math.Min(cmd_buffer.Length - cmd_ptr, remaining);
-                for (int i = 0; i < length; i++) cmd_buffer[cmd_ptr + i] = data[i + offset];
+                Array.Copy(data, offset, cmd_buffer, cmd_ptr, length);
 
                 cmd_ptr += length;
                 if (cmd_ptr == cmd_buffer.Length) finish();
@@ -168,7 +194,7 @@ namespace Gameduino
             cmd32(0xffffff00 | d0);
         }
 
-        public static void finish()
+        public static void finish_unsafe()
         {
             int addr = (0x108000 + (wp & 0xfff));   // #define RAM_CMD               0x108000UL
 
@@ -185,6 +211,26 @@ namespace Gameduino
 
             wp &= 0xffc;
             wr16(1058024, (ushort)wp);  // #define REG_CMD_WRITE        1058024UL
+        }
+
+        public static void finish()
+        {
+            /*int addr = (0x108000 + (wp & 0xfff));   // #define RAM_CMD               0x108000UL
+
+            wp = wp + cmd_ptr - 3;
+            if (wp >= 4096) wp -= 4096;
+
+            cmd_buffer[0] = (byte)(0x80 | (addr >> 16));
+            cmd_buffer[1] = (byte)(addr >> 8);
+            cmd_buffer[2] = (byte)addr;
+
+            spiDevice.Write(cmd_buffer);
+
+            cmd_ptr = 3;
+
+            wp &= 0xffc;
+            wr16(1058024, (ushort)wp);*/  // #define REG_CMD_WRITE        1058024UL
+            finish_unsafe();
             while (rp() != wp) ;
         }
 

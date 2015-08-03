@@ -253,13 +253,17 @@ namespace Gameduino
             GDTransport.wr8(GPU_Registers.SWIZZLE, lcdSwizzle);	// FT800 output to LCD - pin order
             GDTransport.wr8(GPU_Registers.PCLK_POL, lcdPclkpol);// LCD data is clocked in on this PCLK edge
 
-            // configure Touch and Audio - not used in this example, so disable both
+            // disable touch and audio by default
             GDTransport.wr16(GPU_Registers.TOUCH_MODE, 0);		// Disable touch
             GDTransport.wr16(GPU_Registers.TOUCH_RZTHRESH, 0);	// Eliminate any false touches
 
             GDTransport.wr8(GPU_Registers.VOL_PB, 0);		    // turn recorded audio volume down
             GDTransport.wr8(GPU_Registers.VOL_SOUND, 0);		// turn synthesizer volume down
             GDTransport.wr16(GPU_Registers.SOUND, 0x6000);		// set synthesizer to mute
+
+            // clear the screen before turning it on
+            GD2.Clear();
+            GD2.Swap();
 
             // enable display
             GDTransport.wr8(GPU_Registers.PCLK, lcdPclk);		// Now start clocking data to the LCD panel
@@ -271,7 +275,6 @@ namespace Gameduino
 
             // start a display list
             GDTransport.cmd32(0xffffff00);//CMD_DLSTART
-            //GDTransport.cmd32(0xffffff26);//CMD_LOADIDENTITY
         }
         #endregion
 
@@ -463,6 +466,7 @@ namespace Gameduino
             data[11] = (byte)((ushort)options >> 8);
             for (int i = 0; i < s.Length; i++) data[12 + i] = (byte)s[i];
 
+            GDTransport.free(data.Length);
             GDTransport.cmd(data);
         }
 
@@ -496,6 +500,7 @@ namespace Gameduino
             data[18] = (byte)(rgb1 >> 16);
             data[19] = (byte)(rgb1 >> 24);
 
+            GDTransport.free(data.Length);
             GDTransport.cmd(data);
         }
 
@@ -512,6 +517,11 @@ namespace Gameduino
         public static void Load(byte[] data)
         {
             GDTransport.cmd(data);
+        }
+
+        public static void LoadIdentity()
+        {
+            GDTransport.cmd32(0xffffff26);
         }
 
         public static void LoadImage(uint ptr, uint options)
@@ -531,6 +541,7 @@ namespace Gameduino
             data[10] = (byte)(options >> 16);
             data[11] = (byte)(options >> 24);
 
+            GDTransport.free(data.Length);
             GDTransport.cmd(data);
         }
 
@@ -555,6 +566,7 @@ namespace Gameduino
             data[14] = (byte)(num >> 16);
             data[15] = (byte)(num >> 24);
 
+            GDTransport.free(data.Length);
             GDTransport.cmd(data);
         }
 
@@ -687,6 +699,7 @@ namespace Gameduino
             //data[18] = 0;
             //data[19] = 0;
 
+            GDTransport.free(data.Length);
             GDTransport.cmd(data);
         }
 
