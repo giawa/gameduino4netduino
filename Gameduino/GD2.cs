@@ -399,11 +399,23 @@ namespace Gameduino
         public static void BlendFunc(Blend source, Blend destination)
         {
             uint cmd = (11 << 24) | ((uint)source << 3) | (uint)destination;
+            GDTransport.cmd32(cmd);
+        }
+
+        public static void Cell(byte cell)
+        {
+            GDTransport.cmd32((6 << 24) | cell);
         }
 
         public static void Clear()
         {
             GDTransport.cmd32(0x26000007);
+        }
+
+        public static void Clear(byte c, byte s, byte t)
+        {
+            byte m = (byte)((c << 2) | (s << 1) | t);
+            GDTransport.cmd32(0x26000000 | m);
         }
 
         public static void ClearColorRGB(uint rgb)
@@ -633,6 +645,11 @@ namespace Gameduino
         {
             GDTransport.wr16(GPU_Registers.SOUND, (ushort)(((int)note << 8) | (int)instrument));
             GDTransport.wr8(GPU_Registers.PLAY, 1);
+        }
+
+        public static void PointSize(int size)
+        {
+            GDTransport.cmd32((uint)0x0D000000 | (uint)(size & 0xffff));
         }
 
         public static void PointSize(ushort size)

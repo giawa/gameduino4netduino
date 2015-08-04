@@ -8,7 +8,7 @@ namespace Sprites
     {
         private static byte[] sprites = new byte[2001 * 4];
 
-        public static unsafe void Main()
+        public static void Main()
         {
             GD2.Init();
             GD2.Load(data);
