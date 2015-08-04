@@ -110,13 +110,8 @@ namespace Gameduino
             // check to make sure we have enough room in the cmd_buffer
             if (cmd_ptr + 4 > cmd_buffer.Length - 3) finish();
 
-            unchecked
-            {
-                cmd_buffer[cmd_ptr] = (byte)cmd;
-                cmd_buffer[cmd_ptr + 1] = (byte)(cmd >> 8);
-                cmd_buffer[cmd_ptr + 2] = (byte)(cmd >> 16);
-                cmd_buffer[cmd_ptr + 3] = (byte)(cmd >> 24);
-            }
+            byte[] b = BitConverter.GetBytes(cmd);
+            Array.Copy(b, 0, cmd_buffer, cmd_ptr, 4);
 
             cmd_ptr += 4;
         }
@@ -126,13 +121,8 @@ namespace Gameduino
             // check to make sure we have enough room in the cmd_buffer
             if (cmd_ptr + 4 > cmd_buffer.Length - 3) finish();
 
-            unchecked
-            {
-                cmd_buffer[cmd_ptr] = (byte)cmd;
-                cmd_buffer[cmd_ptr + 1] = (byte)(cmd >> 8);
-                cmd_buffer[cmd_ptr + 2] = (byte)(cmd >> 16);
-                cmd_buffer[cmd_ptr + 3] = (byte)(cmd >> 24);
-            }
+            byte[] b = BitConverter.GetBytes(cmd);
+            Array.Copy(b, 0, cmd_buffer, cmd_ptr, 4);
 
             cmd_ptr += 4;
         }
