@@ -626,6 +626,34 @@ namespace Gameduino
             GDTransport.cmd(data);
         }
 
+        public static void Keys(short x, short y, short w, short h, byte font, Options options, string s)
+        {
+            byte[] data = new byte[4 + 12 + s.Length + 1];
+
+            data[0] = 0x0e;
+            data[1] = 0xff;
+            data[2] = 0xff;
+            data[3] = 0xff;
+            data[4] = (byte)x;
+            data[5] = (byte)(x >> 8);
+            data[6] = (byte)y;
+            data[7] = (byte)(y >> 8);
+            data[8] = (byte)w;
+            data[9] = (byte)(w >> 8);
+            data[10] = (byte)(h >> 16);
+            data[11] = (byte)(h >> 24);
+            data[12] = (byte)font;
+            data[13] = 0;
+            data[14] = (byte)options;
+            data[15] = (byte)((ushort)options >> 8);
+
+            for (int i = 0; i < s.Length; i++)
+                data[16 + i] = (byte)s[i];
+
+            GDTransport.free(data.Length);
+            GDTransport.cmd(data);
+        }
+
         public static void LineWidth(ushort width)
         {
             GDTransport.cmd32((14 << 24) | width);
@@ -723,13 +751,6 @@ namespace Gameduino
             GDTransport.wr8(GPU_Registers.PLAY, 1);
         }
 
-        public static void Rotate(int angle)
-        {
-            GDTransport.free(8);
-            GDTransport.cmd32(0xffffff29);
-            GDTransport.cmd32(angle);
-        }
-
         public static void Play(Instrument instrument, byte note)
         {
             GDTransport.wr16(GPU_Registers.SOUND, (ushort)(((int)note << 8) | (int)instrument));
@@ -746,9 +767,31 @@ namespace Gameduino
             GDTransport.cmd32((uint)0x0D000000 | size);
         }
 
-        public static void RestoreContext()
+        public static void Progress(short x, short y, ushort w, ushort h, Options options, ushort val, ushort range)
         {
-            GDTransport.cmd32(0x23000000);
+            byte[] data = new byte[4 + 14];
+
+            data[0] = 0x0f;
+            data[1] = 0xff;
+            data[2] = 0xff;
+            data[3] = 0xff;
+            data[4] = (byte)x;
+            data[5] = (byte)(x >> 8);
+            data[6] = (byte)y;
+            data[7] = (byte)(y >> 8);
+            data[8] = (byte)w;
+            data[9] = (byte)(w >> 8);
+            data[10] = (byte)h;
+            data[11] = (byte)(h >> 8);
+            data[12] = (byte)options;
+            data[13] = (byte)((ushort)options >> 8);
+            data[14] = (byte)val;
+            data[15] = (byte)(val >> 8);
+            data[16] = (byte)range;
+            data[17] = (byte)(range >> 8);
+
+            GDTransport.free(data.Length);
+            GDTransport.cmd(data);
         }
 
         public static ushort Random()
@@ -764,6 +807,47 @@ namespace Gameduino
         public static byte RandomByte()
         {
             return (byte)generator.Next(byte.MaxValue);
+        }
+
+        public static void RestoreContext()
+        {
+            GDTransport.cmd32(0x23000000);
+        }
+
+        public static void Rotate(int angle)
+        {
+            GDTransport.free(8);
+            GDTransport.cmd32(0xffffff29);
+            GDTransport.cmd32(angle);
+        }
+
+        public static void Scrollbar(short x, short y, ushort w, ushort h, Options options, ushort val, ushort size, ushort range)
+        {
+            byte[] data = new byte[4 + 16];
+
+            data[0] = 0x0f;
+            data[1] = 0xff;
+            data[2] = 0xff;
+            data[3] = 0xff;
+            data[4] = (byte)x;
+            data[5] = (byte)(x >> 8);
+            data[6] = (byte)y;
+            data[7] = (byte)(y >> 8);
+            data[8] = (byte)w;
+            data[9] = (byte)(w >> 8);
+            data[10] = (byte)h;
+            data[11] = (byte)(h >> 8);
+            data[12] = (byte)options;
+            data[13] = (byte)((ushort)options >> 8);
+            data[14] = (byte)val;
+            data[15] = (byte)(val >> 8);
+            data[16] = (byte)size;
+            data[17] = (byte)(size >> 8);
+            data[18] = (byte)range;
+            data[19] = (byte)(range >> 8);
+
+            GDTransport.free(data.Length);
+            GDTransport.cmd(data);
         }
 
         public static void SelfCalibrate()
