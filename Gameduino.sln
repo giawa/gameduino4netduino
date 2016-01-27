@@ -45,7 +45,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demos", "Demos", "{04D96021
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sprites", "Demos\Sprites\Sprites.csproj", "{4E5C6A38-3B85-43F6-94E9-E099950CDCA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Widgets", "Widgets\Widgets.csproj", "{5FBCD515-0A51-4209-9539-BB1591F5E3A0}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Widgets", "Demos\Widgets\Widgets.csproj", "{5FBCD515-0A51-4209-9539-BB1591F5E3A0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
