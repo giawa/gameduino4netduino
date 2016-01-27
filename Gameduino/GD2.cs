@@ -405,7 +405,7 @@ namespace Gameduino
 
         public static void Button(short x, short y, ushort w, ushort h, byte font, Options options, string s)
         {
-            byte[] data = new byte[4 + 11 + s.Length + 1];
+            byte[] data = new byte[4 + 12 + s.Length + 1];
 
             data[0] = 0x0d;
             data[1] = 0xff;
@@ -419,12 +419,13 @@ namespace Gameduino
             data[9] = (byte)(w >> 8);
             data[10] = (byte)h;
             data[11] = (byte)(h >> 8);
-            data[12] = font;
-            data[13] = (byte)options;
-            data[14] = (byte)((ushort)options >> 8);
+            data[12] = (byte)font;
+            data[13] = 0;
+            data[14] = (byte)options;
+            data[15] = (byte)((ushort)options >> 8);
 
             for (int i = 0; i < s.Length; i++)
-                data[15 + i] = (byte)s[i];
+                data[16 + i] = (byte)s[i];
 
             GDTransport.free(data.Length);
             GDTransport.cmd(data);
@@ -693,7 +694,7 @@ namespace Gameduino
 
         public static void Number(short x, short y, byte font, Options options, uint n)
         {
-            byte[] data = new byte[4 + 11];
+            byte[] data = new byte[4 + 12];
 
             data[0] = 0x2e;
             data[1] = 0xff;
@@ -704,12 +705,13 @@ namespace Gameduino
             data[6] = (byte)y;
             data[7] = (byte)(y >> 8);
             data[8] = font;
-            data[9] = (byte)options;
-            data[10] = (byte)((ushort)options >> 8);
-            data[11] = (byte)n;
-            data[12] = (byte)(n >> 8);
-            data[13] = (byte)(n >> 16);
-            data[14] = (byte)(n >> 24);
+            data[9] = 0;
+            data[10] = (byte)options;
+            data[11] = (byte)((ushort)options >> 8);
+            data[12] = (byte)n;
+            data[13] = (byte)(n >> 8);
+            data[14] = (byte)(n >> 16);
+            data[15] = (byte)(n >> 24);
 
             GDTransport.free(data.Length);
             GDTransport.cmd(data);
@@ -910,7 +912,7 @@ namespace Gameduino
 
         public static void Toggle(short x, short y, short w, byte font, Options options, ushort state, string s)
         {
-            byte[] data = new byte[4 + 11 + s.Length + 1];
+            byte[] data = new byte[4 + 12 + s.Length + 1];
 
             data[0] = 0x12;
             data[1] = 0xff;
@@ -923,13 +925,14 @@ namespace Gameduino
             data[8] = (byte)w;
             data[9] = (byte)(w >> 8);
             data[10] = font;
-            data[11] = (byte)options;
-            data[12] = (byte)((ushort)options >> 8);
-            data[13] = (byte)state;
-            data[14] = (byte)(state >> 8);
+            data[11] = 0;
+            data[12] = (byte)options;
+            data[13] = (byte)((ushort)options >> 8);
+            data[14] = (byte)state;
+            data[15] = (byte)(state >> 8);
 
             for (int i = 0; i < s.Length; i++)
-                data[15 + i] = (byte)s[i];
+                data[16 + i] = (byte)s[i];
 
             GDTransport.free(data.Length);
             GDTransport.cmd(data);
