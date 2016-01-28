@@ -36,7 +36,7 @@
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Gameduino\Gameduino.csproj">
+    <ProjectReference Include="..\..\Gameduino\Gameduino.csproj">
       <Project>{6F839E93-D3ED-4972-A7E2-B2F77F5618E1}</Project>
       <Name>Gameduino</Name>
     </ProjectReference>

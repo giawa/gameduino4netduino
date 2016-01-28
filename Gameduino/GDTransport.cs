@@ -167,21 +167,30 @@ namespace Gameduino
             while ((cmd_ptr - 3) % 4 != 0) cmd_ptr++;
         }
 
-        public static void cmd32(byte d0, byte d1, byte d2, byte d3)
+        public static void align()
         {
-            // check to make sure we have enough room in the cmd_buffer
-            if (cmd_ptr + 4 > cmd_buffer.Length - 3) finish();
-
-            cmd_buffer[cmd_ptr] = d0;
-            cmd_buffer[cmd_ptr + 1] = d1;
-            cmd_buffer[cmd_ptr + 2] = d2;
-            cmd_buffer[cmd_ptr + 3] = d3;
-            cmd_ptr += 4;
+            while ((cmd_ptr - 3) % 4 != 0) cmd_ptr++;
         }
 
         public static void cmd32ffffff(byte d0)
         {
             cmd32(0xffffff00 | d0);
+        }
+
+        public static void cmd16(ushort cmd)
+        {
+            byte[] b = BitConverter.GetBytes(cmd);
+            Array.Copy(b, 0, cmd_buffer, cmd_ptr, 2);
+
+            cmd_ptr += 2;
+        }
+
+        public static void cmd16(short cmd)
+        {
+            byte[] b = BitConverter.GetBytes(cmd);
+            Array.Copy(b, 0, cmd_buffer, cmd_ptr, 2);
+
+            cmd_ptr += 2;
         }
 
         public static void finish_unsafe()

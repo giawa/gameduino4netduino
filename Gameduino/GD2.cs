@@ -454,36 +454,22 @@ namespace Gameduino
 
         public static void ClearColorRGB(byte red, byte green, byte blue)
         {
-            GDTransport.cmd32(blue, green, red, 2);
+            GDTransport.cmd32(0x02000000 | blue | (green << 8) | (red << 16));
         }
 
         public static void Clock(short x, short y, short r, Options options, ushort h, ushort m, ushort s, ushort ms)
         {
-            byte[] data = new byte[4 + 16];
+            GDTransport.free(20);
 
-            data[0] = 0x14;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = (byte)r;
-            data[9] = (byte)(r >> 8);
-            data[10] = (byte)options;
-            data[11] = (byte)((ushort)options >> 8);
-            data[12] = (byte)h;
-            data[13] = (byte)(h >> 8);
-            data[14] = (byte)m;
-            data[15] = (byte)(m >> 8);
-            data[16] = (byte)s;
-            data[17] = (byte)(s >> 8);
-            data[18] = (byte)ms;
-            data[19] = (byte)(ms >> 8);
-
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.cmd32ffffff(0x14);
+            GDTransport.cmd16(x);
+            GDTransport.cmd16(y);
+            GDTransport.cmd16(r);
+            GDTransport.cmd16((ushort)options);
+            GDTransport.cmd16(h);
+            GDTransport.cmd16(m);
+            GDTransport.cmd16(s);
+            GDTransport.cmd16(ms);
         }
 
         public static void ColorA(byte alpha)
@@ -510,25 +496,16 @@ namespace Gameduino
 
         public static void Dial(short x, short y, ushort r, Options options, ushort val)
         {
-            byte[] data = new byte[4 + 10];
+            GDTransport.free(14);
 
-            data[0] = 0x2d;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = (byte)r;
-            data[9] = (byte)(r >> 8);
-            data[10] = (byte)options;
-            data[11] = (byte)((ushort)options >> 8);
-            data[12] = (byte)val;
-            data[13] = (byte)(val >> 8);
+            GDTransport.cmd32ffffff(0x2d);
+            GDTransport.cmd16(x);
+            GDTransport.cmd16(y);
+            GDTransport.cmd16(r);
+            GDTransport.cmd16((ushort)options);
+            GDTransport.cmd16(val);
 
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.align();
         }
 
         public static void Display()
@@ -570,60 +547,30 @@ namespace Gameduino
 
         public static void Gauge(short x, short y, short r, Options options, ushort major, ushort minor, ushort val, ushort range)
         {
-            byte[] data = new byte[4 + 16];
+            GDTransport.free(20);
 
-            data[0] = 0x13;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = (byte)r;
-            data[9] = (byte)(r >> 8);
-            data[10] = (byte)options;
-            data[11] = (byte)((ushort)options >> 8);
-            data[12] = (byte)major;
-            data[13] = (byte)(major >> 8);
-            data[14] = (byte)minor;
-            data[15] = (byte)(minor >> 8);
-            data[16] = (byte)val;
-            data[17] = (byte)(val >> 8);
-            data[18] = (byte)range;
-            data[19] = (byte)(range >> 8);
-
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.cmd32ffffff(0x13);
+            GDTransport.cmd16(x);
+            GDTransport.cmd16(y);
+            GDTransport.cmd16(r);
+            GDTransport.cmd16((ushort)options);
+            GDTransport.cmd16(major);
+            GDTransport.cmd16(minor);
+            GDTransport.cmd16(val);
+            GDTransport.cmd16(range);
         }
 
         public static void Gradient(ushort x0, ushort y0, uint rgb0, ushort x1, ushort y1, uint rgb1)
         {
-            byte[] data = new byte[20];
+            GDTransport.free(20);
 
-            data[0] = 0x0b;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x0;
-            data[5] = (byte)(x0 >> 8);
-            data[6] = (byte)y0;
-            data[7] = (byte)(y0 >> 8);
-            data[8] = (byte)rgb0;
-            data[9] = (byte)(rgb0 >> 8);
-            data[10] = (byte)(rgb0 >> 16);
-            data[11] = (byte)(rgb0 >> 24);
-            data[12] = (byte)x1;
-            data[13] = (byte)(x1 >> 8);
-            data[14] = (byte)y1;
-            data[15] = (byte)(y1 >> 8);
-            data[16] = (byte)rgb1;
-            data[17] = (byte)(rgb1 >> 8);
-            data[18] = (byte)(rgb1 >> 16);
-            data[19] = (byte)(rgb1 >> 24);
-
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.cmd32ffffff(0x0b);
+            GDTransport.cmd16(x0);
+            GDTransport.cmd16(y0);
+            GDTransport.cmd32(rgb0);
+            GDTransport.cmd16(x1);
+            GDTransport.cmd16(y1);
+            GDTransport.cmd32(rgb1);
         }
 
         public static void Keys(short x, short y, short w, short h, byte font, Options options, string s)
@@ -676,73 +623,42 @@ namespace Gameduino
 
         public static void LoadImage(uint ptr, uint options)
         {
-            byte[] data = new byte[12];
+            GDTransport.free(12);
 
-            data[0] = 0x24;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)ptr;
-            data[5] = (byte)(ptr >> 8);
-            data[6] = (byte)(ptr >> 16);
-            data[7] = (byte)(ptr >> 24);
-            data[8] = (byte)options;
-            data[9] = (byte)(options >> 8);
-            data[10] = (byte)(options >> 16);
-            data[11] = (byte)(options >> 24);
+            GDTransport.cmd32ffffff(0x24);
+            GDTransport.cmd32(ptr);
+            GDTransport.cmd32(options);
+        }
 
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+        public static void MemWrite(uint ptr, uint num)
+        {
+            GDTransport.free(12);
+
+            GDTransport.cmd32ffffff(0x1a);
+            GDTransport.cmd32(ptr);
+            GDTransport.cmd32(num);
         }
 
         public static void Memset(uint ptr, byte value, uint num)
         {
-            byte[] data = new byte[16];
+            GDTransport.free(16);
 
-            data[0] = 0x1b;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)ptr;
-            data[5] = (byte)(ptr >> 8);
-            data[6] = (byte)(ptr >> 16);
-            data[7] = (byte)(ptr >> 24);
-            data[8] = value;
-            //data[9] = 0;
-            //data[10] = 0;
-            //data[11] = 0;
-            data[12] = (byte)num;
-            data[13] = (byte)(num >> 8);
-            data[14] = (byte)(num >> 16);
-            data[15] = (byte)(num >> 24);
-
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.cmd32ffffff(0x1b);
+            GDTransport.cmd32(ptr);
+            GDTransport.cmd32((int)value);
+            GDTransport.cmd32(num);
         }
 
         public static void Number(short x, short y, byte font, Options options, uint n)
         {
-            byte[] data = new byte[4 + 12];
+            GDTransport.free(16);
 
-            data[0] = 0x2e;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = font;
-            data[9] = 0;
-            data[10] = (byte)options;
-            data[11] = (byte)((ushort)options >> 8);
-            data[12] = (byte)n;
-            data[13] = (byte)(n >> 8);
-            data[14] = (byte)(n >> 16);
-            data[15] = (byte)(n >> 24);
-
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.cmd32ffffff(0x2e);
+            GDTransport.cmd16(x);
+            GDTransport.cmd16(y);
+            GDTransport.cmd16((ushort)font);
+            GDTransport.cmd16((ushort)options);
+            GDTransport.cmd32(n);
         }
 
         public static void Play(byte instrument, byte note)
@@ -769,29 +685,18 @@ namespace Gameduino
 
         public static void Progress(short x, short y, ushort w, ushort h, Options options, ushort val, ushort range)
         {
-            byte[] data = new byte[4 + 14];
+            GDTransport.free(18);
 
-            data[0] = 0x0f;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = (byte)w;
-            data[9] = (byte)(w >> 8);
-            data[10] = (byte)h;
-            data[11] = (byte)(h >> 8);
-            data[12] = (byte)options;
-            data[13] = (byte)((ushort)options >> 8);
-            data[14] = (byte)val;
-            data[15] = (byte)(val >> 8);
-            data[16] = (byte)range;
-            data[17] = (byte)(range >> 8);
+            GDTransport.cmd32ffffff(0x0f);
+            GDTransport.cmd16(x);
+            GDTransport.cmd16(y);
+            GDTransport.cmd16(w);
+            GDTransport.cmd16(h);
+            GDTransport.cmd16((ushort)options);
+            GDTransport.cmd16(val);
+            GDTransport.cmd16(range);
 
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.align();
         }
 
         public static ushort Random()
@@ -823,31 +728,17 @@ namespace Gameduino
 
         public static void Scrollbar(short x, short y, ushort w, ushort h, Options options, ushort val, ushort size, ushort range)
         {
-            byte[] data = new byte[4 + 16];
+            GDTransport.free(20);
 
-            data[0] = 0x0f;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = (byte)w;
-            data[9] = (byte)(w >> 8);
-            data[10] = (byte)h;
-            data[11] = (byte)(h >> 8);
-            data[12] = (byte)options;
-            data[13] = (byte)((ushort)options >> 8);
-            data[14] = (byte)val;
-            data[15] = (byte)(val >> 8);
-            data[16] = (byte)size;
-            data[17] = (byte)(size >> 8);
-            data[18] = (byte)range;
-            data[19] = (byte)(range >> 8);
-
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.cmd32ffffff(0x11);
+            GDTransport.cmd16(x);
+            GDTransport.cmd16(y);
+            GDTransport.cmd16(w);
+            GDTransport.cmd16(h);
+            GDTransport.cmd16((ushort)options);
+            GDTransport.cmd16(val);
+            GDTransport.cmd16(size);
+            GDTransport.cmd16(range);
         }
 
         public static void SelfCalibrate()
@@ -919,58 +810,31 @@ namespace Gameduino
 
         public static void Sketch(ushort x, ushort y, ushort w, ushort h, uint ptr, PixelFormat format)
         {
-            byte[] data = new byte[20];
+            GDTransport.free(20);
 
-            data[0] = 0x30;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = (byte)w;
-            data[9] = (byte)(w >> 8);
-            data[10] = (byte)h;
-            data[11] = (byte)(h >> 8);
-            data[12] = (byte)ptr;
-            data[13] = (byte)(ptr >> 8);
-            data[14] = (byte)(ptr >> 16);
-            data[15] = (byte)(ptr >> 24);
-            data[16] = (byte)format;
-            //data[17] = 0;
-            //data[18] = 0;
-            //data[19] = 0;
-
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.cmd32ffffff(0x30);
+            GDTransport.cmd16(x);
+            GDTransport.cmd16(y);
+            GDTransport.cmd16(w);
+            GDTransport.cmd16(h);
+            GDTransport.cmd32(ptr);
+            GDTransport.cmd32((int)format);
         }
 
         public static void Slider(short x, short y, ushort w, ushort h, Options options, ushort val, ushort range)
         {
-            byte[] data = new byte[4 + 14];
+            GDTransport.free(18);
 
-            data[0] = 0x10;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = (byte)w;
-            data[9] = (byte)(w >> 8);
-            data[10] = (byte)h;
-            data[11] = (byte)(h >> 8);
-            data[12] = (byte)options;
-            data[13] = (byte)((ushort)options >> 8);
-            data[14] = (byte)val;
-            data[15] = (byte)(val >> 8);
-            data[16] = (byte)range;
-            data[17] = (byte)(range >> 8);
+            GDTransport.cmd32ffffff(0x10);
+            GDTransport.cmd16(x);
+            GDTransport.cmd16(y);
+            GDTransport.cmd16(w);
+            GDTransport.cmd16(h);
+            GDTransport.cmd16((ushort)options);
+            GDTransport.cmd16(val);
+            GDTransport.cmd16(range);
 
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.align();
         }
 
         public static void Swap()
@@ -1024,24 +888,15 @@ namespace Gameduino
 
         public static void Track(short x, short y, ushort w, ushort h, byte tag)
         {
-            byte[] data = new byte[4 + 9];
+            GDTransport.free(16);
 
-            data[0] = 0x2c;
-            data[1] = 0xff;
-            data[2] = 0xff;
-            data[3] = 0xff;
-            data[4] = (byte)x;
-            data[5] = (byte)(x >> 8);
-            data[6] = (byte)y;
-            data[7] = (byte)(y >> 8);
-            data[8] = (byte)w;
-            data[9] = (byte)(w >> 8);
-            data[10] = (byte)h;
-            data[11] = (byte)(h >> 8);
-            data[12] = (byte)tag;
-
-            GDTransport.free(data.Length);
-            GDTransport.cmd(data);
+            GDTransport.cmd32ffffff(0x2c);
+            GDTransport.cmd16(x);
+            GDTransport.cmd16(y);
+            GDTransport.cmd16(w);
+            GDTransport.cmd16(h);
+            GDTransport.cmd16((ushort)tag);
+            GDTransport.cmd16(0);   // 4-byte alignment
         }
 
         public static void Translate(int tx, int ty)
