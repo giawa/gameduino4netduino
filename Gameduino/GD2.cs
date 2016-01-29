@@ -3,15 +3,68 @@ using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware.NetduinoPlus;
 using System;
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace Gameduino
 {
+    public class Streamer
+    {
+        private int ptr;
+        private ushort mask, wp;
+        private FileStream stream;
+
+        public Streamer(FileInfo file, ushort freq = 44100, ushort format = 2, int ptr = (0x40000 - 8192), ushort size = 8192)
+        {
+            stream = new FileStream(file.FullName, FileMode.Open);
+
+            this.ptr = ptr;
+            this.mask = (ushort)(size - 1);
+            this.wp = 0;
+
+            buffer = new byte[512];
+
+            for (int i = 0; i < 10; i++)
+                Feed();
+
+            GD2.Sample((uint)ptr, size, freq, format, 1);
+        }
+
+        private byte[] buffer;
+
+        public bool Feed()
+        {
+            int rp = GDTransport.rd32((uint)GPU_Registers.PLAYBACK_READPTR) - ptr;
+            int freespace = mask & ((rp - 1) - wp);
+            int bytes = 0;
+
+            if (freespace >= 512)
+            {
+                bytes += stream.Read(buffer, 0, 512);
+
+                GD2.MemWrite((uint)(ptr + wp), 512);
+                GDTransport.cmd(buffer);
+                GDTransport.finish();
+
+                wp = (ushort)((wp + 512) & mask);
+
+                return bytes != 0;
+            }
+            else return true;
+        }
+    }
+
     public class Polygon
     {
         private int x0, y0, x1, y1;
-        private int[] x = new int[8];
-        private int[] y = new int[8];
+        private int[] x;
+        private int[] y;
         private byte n;
+
+        public Polygon(int size = 8)
+        {
+            x = new int[size];
+            y = new int[size];
+        }
 
         private void Restart()
         {
@@ -472,6 +525,11 @@ namespace Gameduino
             GDTransport.cmd16(ms);
         }
 
+        public static void ColdStart()
+        {
+            GDTransport.cmd32ffffff(0x32);
+        }
+
         public static void ColorA(byte alpha)
         {
             GDTransport.cmd32((uint)0x10000000 | alpha);
@@ -545,6 +603,14 @@ namespace Gameduino
             GDTransport.cmd32(0x21000000);
         }
 
+        public static void ForegroundColor(uint color)
+        {
+            GDTransport.free(8);
+
+            GDTransport.cmd32ffffff(0x0a);
+            GDTransport.cmd32(color);
+        }
+
         public static void Gauge(short x, short y, short r, Options options, ushort major, ushort minor, ushort val, ushort range)
         {
             GDTransport.free(20);
@@ -558,6 +624,14 @@ namespace Gameduino
             GDTransport.cmd16(minor);
             GDTransport.cmd16(val);
             GDTransport.cmd16(range);
+        }
+
+        public static void GradColor(uint color)
+        {
+            GDTransport.free(8);
+
+            GDTransport.cmd32ffffff(0x3f);
+            GDTransport.cmd32(color);
         }
 
         public static void Gradient(ushort x0, ushort y0, uint rgb0, ushort x1, ushort y1, uint rgb1)
