@@ -1,3 +1,5 @@
+#define GAMEDUINO
+
 using Microsoft.SPOT;
 using Microsoft.SPOT.Hardware;
 using SecretLabs.NETMF.Hardware.NetduinoPlus;
@@ -267,6 +269,7 @@ namespace Gameduino
         #endregion
 
         #region Initialization
+#if GAMEDUINO
         private static ushort lcdWidth = 480;				// Active width of LCD display
         private static ushort lcdHeight = 272;				// Active height of LCD display
         private static ushort lcdHcycle = 548;				// Total number of clocks per line
@@ -280,6 +283,84 @@ namespace Gameduino
         private static byte lcdPclk = 5;				// Pixel Clock
         private static byte lcdSwizzle = 3;				// Define RGB output pins
         private static byte lcdPclkpol = 1;				// Define active edge of PCLK
+#else
+        private static ushort lcdWidth = 800;       // Active width of LCD display
+        private static ushort lcdHeight = 480;      // Active height of LCD display
+        private static ushort lcdHcycle = 928;      // Total number of clocks per line
+        private static ushort lcdHoffset = 88;      // Start of active line
+        private static ushort lcdHsync0 = 0;        // Start of horizontal sync pulse
+        private static ushort lcdHsync1 = 48;       // End of horizontal sync pulse
+        private static ushort lcdVcycle = 525;      // Total number of lines per screen
+        private static ushort lcdVoffset = 32;      // Start of active screen
+        private static ushort lcdVsync0 = 0;        // Start of vertical sync pulse
+        private static ushort lcdVsync1 = 3;        // End of vertical sync pulse
+        private static byte lcdPclk = 2;            // Pixel Clock
+        private static byte lcdSwizzle = 0;         // Define RGB output pins
+        private static byte lcdPclkpol = 1;         // Define active edge of PCLK
+        private static byte lcdCSpread = 0;
+        private static byte lcdDither = 1;
+#endif
+
+        public static void Init81X()
+        {
+            GDTransport.FTDI81X = true;
+            GDTransport.Init();
+
+            GDTransport.hostcmd(0x00);
+            System.Threading.Thread.Sleep(5);
+            GDTransport.hostcmd(0x44);
+            System.Threading.Thread.Sleep(5);
+            GDTransport.hostcmd(0x62);
+
+            // reset the FT810
+            System.Threading.Thread.Sleep(200);
+            GDTransport.hostcmd(0x68);
+            System.Threading.Thread.Sleep(200);
+
+            Debug.Print("ID Register: " + GDTransport.rd(GPU_Registers_810.ID));
+
+            GDTransport.wr8(GPU_Registers_810.PCLK, 0);
+            GDTransport.wr8(GPU_Registers_810.PWM_DUTY, 0);
+
+            // initialize the display
+            GDTransport.wr16(GPU_Registers_810.HSIZE, lcdWidth);	// active display width
+            GDTransport.wr16(GPU_Registers_810.HCYCLE, lcdHcycle);	// total number of clocks per line, incl front/back porch
+            GDTransport.wr16(GPU_Registers_810.HOFFSET, lcdHoffset);// start of active line
+            GDTransport.wr16(GPU_Registers_810.HSYNC0, lcdHsync0);	// start of horizontal sync pulse
+            GDTransport.wr16(GPU_Registers_810.HSYNC1, lcdHsync1);	// end of horizontal sync pulse
+            GDTransport.wr16(GPU_Registers_810.VSIZE, lcdHeight);	// active display height
+            GDTransport.wr16(GPU_Registers_810.VCYCLE, lcdVcycle);	// total number of lines per screen, incl pre/post
+            GDTransport.wr16(GPU_Registers_810.VOFFSET, lcdVoffset);// start of active screen
+            GDTransport.wr16(GPU_Registers_810.VSYNC0, lcdVsync0);	// start of vertical sync pulse
+            GDTransport.wr16(GPU_Registers_810.VSYNC1, lcdVsync1);	// end of vertical sync pulse
+            GDTransport.wr8(GPU_Registers_810.SWIZZLE, lcdSwizzle);	// FT800 output to LCD - pin order
+            GDTransport.wr8(GPU_Registers_810.PCLK_POL, lcdPclkpol);// LCD data is clocked in on this PCLK edge
+            GDTransport.wr8(GPU_Registers_810.CSPREAD, lcdCSpread);
+            GDTransport.wr8(GPU_Registers_810.DITHER, lcdDither);
+
+            // disable touch and audio by default
+            GDTransport.wr16(GPU_Registers_810.TOUCH_MODE, 0);		// Disable touch
+            GDTransport.wr16(GPU_Registers_810.TOUCH_RZTHRESH, 0);	// Eliminate any false touches
+
+            GDTransport.wr8(GPU_Registers_810.VOL_PB, 0);		    // turn recorded audio volume down
+            GDTransport.wr8(GPU_Registers_810.VOL_SOUND, 0);		// turn synthesizer volume down
+            GDTransport.wr16(GPU_Registers_810.SOUND, 0x0060);		// set synthesizer to mute
+
+            // clear the screen before turning it on
+            //GD2.Clear();
+            //GD2.Swap();
+
+            // enable display
+            GDTransport.wr8(GPU_Registers_810.PCLK, lcdPclk);		// Now start clocking data to the LCD panel
+            GDTransport.wr8(GPU_Registers_810.PWM_DUTY, 127);       // Backlight to full power
+
+            GDTransport.wr8(GPU_Registers_810.GPIO_DIR, 0x83);
+            GDTransport.wr8(GPU_Registers_810.GPIO, 0x80);
+            //GDTransport.wr8(GPU_Registers_810.ROTATE, 1);           // The lcd viewing angle seem to be much better this way
+
+            // start a display list
+            GDTransport.cmd32(0xffffff00);//CMD_DLSTART
+        }
 
         public static void Init()
         {
